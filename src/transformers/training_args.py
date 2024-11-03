@@ -810,6 +810,12 @@ class TrainingArguments:
             Whether enable [Liger](https://github.com/linkedin/Liger-Kernel) Kernel for LLM model training.
             It can effectively increase multi-GPU training throughput by ~20% and reduces memory usage by ~60%, works out of the box with
             flash attention, PyTorch FSDP, and Microsoft DeepSpeed. Currently, it supports llama, mistral, mixtral and gemma models.
+            
+        max_shard_size (`int` or `str`, *optional*, defaults to `"5GB"`):
+            Only applicable for models. The maximum size for a checkpoint before being sharded.
+            Checkpoints shard will then be each of size lower than this size.
+            If expressed as a string, needs to be digits followed by a unit (like "5MB").
+            We default it to "5GB" so that users can easily load models on free-tier Google Colab instances without any CPU OOM issues.
     """
 
     framework = "pt"
@@ -1538,6 +1544,14 @@ class TrainingArguments:
             "help": "Whether or not to average tokens across devices. If enabled, will use all_reduce to "
             "synchronize num_tokens_in_batch for precise loss calculation. Reference: "
             "https://github.com/huggingface/transformers/issues/34242"
+        },
+    )
+    
+    max_shard_size: Optional[int, str] = field(
+        default="5GB",
+        metadata={
+            "help": "The maximum size for a checkpoint before being sharded."
+            "Checkpoints shard will then be each of size lower than this size."
         },
     )
 
@@ -2739,6 +2753,7 @@ class TrainingArguments:
         steps: int = 500,
         total_limit: Optional[int] = None,
         on_each_node: bool = False,
+        max_shard_size: Optional[int, str] = "5GB",
     ):
         """
         A method that regroups all arguments linked to checkpoint saving.
@@ -2762,6 +2777,11 @@ class TrainingArguments:
 
                 This should not be activated when the different nodes use the same storage as the files will be saved
                 with the same names for each node.
+                
+            max_shard_size (`int` or `str`, *optional*, defaults to `"5GB"`):
+                The maximum size for a checkpoint before being sharded.
+                Checkpoints shard will then be each of size lower than this size.
+                
 
         Example:
 
@@ -2780,6 +2800,7 @@ class TrainingArguments:
         self.save_steps = steps
         self.save_total_limit = total_limit
         self.save_on_each_node = on_each_node
+        self.max_shard_size = max_shard_size
         return self
 
     def set_logging(

@@ -3808,6 +3808,7 @@ class Trainer:
                         state_dict=full_state_dict,
                         save_function=xm.save,
                         safe_serialization=self.args.save_safetensors,
+                        max_shard_size=self.args.max_shard_size,
                     )
                 else:
                     logger.info("Trainer.model is not a `PreTrainedModel`, only saving its state dict.")
@@ -3820,6 +3821,7 @@ class Trainer:
                     state_dict=xm._maybe_convert_to_cpu(model.state_dict()),
                     save_function=xm.save,
                     safe_serialization=self.args.save_safetensors,
+                    max_shard_size=self.args.max_shard_size,
                 )
             else:
                 logger.info("Trainer.model is not a `PreTrainedModel`, only saving its state dict.")
@@ -3832,6 +3834,7 @@ class Trainer:
                 save_function=xm.save,
                 safe_serialization=self.args.save_safetensors,
                 state_dict=xm._maybe_convert_to_cpu(model.state_dict()),
+                max_shard_size=self.args.max_shard_size,
             )
         if self.processing_class is not None and self.args.should_save:
             self.processing_class.save_pretrained(output_dir)
@@ -3851,7 +3854,10 @@ class Trainer:
 
             if isinstance(self.accelerator.unwrap_model(self.model), supported_classes):
                 self.accelerator.unwrap_model(self.model).save_pretrained(
-                    output_dir, state_dict=state_dict, safe_serialization=self.args.save_safetensors
+                    output_dir,
+                    state_dict=state_dict,
+                    safe_serialization=self.args.save_safetensors,
+                    max_shard_size=self.args.max_shard_size,
                 )
             else:
                 logger.info("Trainer.model is not a `PreTrainedModel`, only saving its state dict.")
@@ -3863,7 +3869,10 @@ class Trainer:
                     torch.save(state_dict, os.path.join(output_dir, WEIGHTS_NAME))
         else:
             self.model.save_pretrained(
-                output_dir, state_dict=state_dict, safe_serialization=self.args.save_safetensors
+                output_dir,
+                state_dict=state_dict,
+                safe_serialization=self.args.save_safetensors,
+                max_shard_size=self.args.max_shard_size,
             )
 
         if self.processing_class is not None:
